@@ -1,8 +1,0 @@
-0 Background Noise
-1 Google
-2 Note Down
-3 Open News
-4 Open Notepad
-5 Play Music
-6 Stop
-7 What Time Is It
