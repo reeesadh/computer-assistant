@@ -42,6 +42,8 @@ is_recording = False
 record_duration_seconds = 3
 samples_to_record = SAMPLE_RATE * record_duration_seconds
 wake_word_detected = False
+note_num = 0
+
 
 
 def removePunctuation(sentence):
@@ -52,9 +54,6 @@ def narrate(text, lang='en'):
     filename = "output.mp3"
     tts.save(filename)
     os.system(f"afplay {filename}")
-
-narrate("program initializing")
-
 
 def cutOff(text, mark): # returns text after first instance of a certain marker word
     finalCut = ""
@@ -73,7 +72,7 @@ def cutOff(text, mark): # returns text after first instance of a certain marker 
         if i>ind:
             finalCut += words[i] + " "
     
-    print("FINALCUT: " + finalCut)
+    #print("FINALCUT: " + finalCut)
     return finalCut
 
 def google(text):
@@ -96,6 +95,31 @@ def openApp(text):
     except FileNotFoundError:
         print(f"app '{app}' not found")
         narrate("could not find app " + app)
+
+def writeNote(text):
+    global note_num
+
+    filename="assistant_new_note" + str(note_num) + ".txt"
+    note_content = cutOff(text, "note")
+
+    with open(filename, 'a') as f:
+        f.write(note_content)
+
+    print("NEW NOTE ADDED: " + note_content + " TO FILE " + filename)
+
+    # open file for various OS
+    if sys.platform.startswith('win'): #windows
+        os.startfile(filename)
+    elif sys.platform.startswith('darwin'): #macOS
+        subprocess.Popen(['open', filename])
+    elif sys.platform.startswith('linux'): #linux
+        subprocess.Popen(['xdg-open', filename])
+    else:
+        print("Sorry, your OS is not compatible")
+    
+    
+    note_num += 1
+
 def detect_command(audio_data):
     #print("audio length: " + str(len(audio_data)/SAMPLE_RATE))
     with tempfile.NamedTemporaryFile(suffix=".wav") as f:
@@ -111,6 +135,8 @@ def detect_command(audio_data):
     if "google" in text:
         #print("googling")
         google(text)
+    if "note" in text:
+        writeNote(text)
 
 
     return None
@@ -166,7 +192,8 @@ with sd.InputStream(
     callback=audio_callback):
 
     #print("LISTENING...")
-    narrate("To use this assistant, say hey assistant and then say open (insert app name) or google (insert your query). The assistant will sleep after a few seconds.")
+    narrate("To use this assistant, say hey assistant.")
+    print("\n-----------------FEATURES-----------------\nTo google something: say 'google' then your query\nTo open an app: say 'open' then the app name\nTo note something down: say 'note' then what you want to note down")
     speaking = False
     while True:
         time.sleep(0.1)
